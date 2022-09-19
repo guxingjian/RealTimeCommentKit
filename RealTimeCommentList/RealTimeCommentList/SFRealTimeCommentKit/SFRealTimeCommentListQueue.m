@@ -32,6 +32,8 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
         _condition = [[NSCondition alloc] init];
         _addCommentQueue = dispatch_queue_create("SFRealTimeCommentAddCommentQueue", DISPATCH_QUEUE_SERIAL);
         _getCommentQueue = dispatch_queue_create("SFRealTimeCommentGetCommentQueue", DISPATCH_QUEUE_SERIAL);
+        
+        self.maxSize = 10000;
     }
     return self;
 }
@@ -89,12 +91,23 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
         
         self.currentDataCount = self.currentDataCount + arrayCommentData.count;
         
+        if((self.maxSize > 0) && (self.currentDataCount > self.maxSize)){
+            [self adjustDataCount];
+        }
+        
         [self.condition signal];
         [self.condition unlock];
     });
 }
 
-- (id)getLastCommentData{
+- (void)adjustDataCount{
+    NSInteger removeCount = self.currentDataCount - self.maxSize;
+    for(NSInteger i = 0; i < removeCount; ++ i){
+        [self popLastCommentData];
+    }
+}
+
+- (id)popLastCommentData{
     if(0 == self.arrayData.count){
         return nil;
     }
@@ -128,7 +141,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
             [self.condition wait];
         }
         
-        id commentData = [self getLastCommentData];
+        id commentData = [self popLastCommentData];
         
         [self.condition unlock];
         

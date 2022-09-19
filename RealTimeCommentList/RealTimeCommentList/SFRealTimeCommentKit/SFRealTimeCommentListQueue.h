@@ -17,6 +17,7 @@ typedef void (^SFRealTimeCommentListQueueCountChangedBlock) (NSInteger count);
 @interface SFRealTimeCommentListQueue : NSObject
 
 @property(nonatomic, strong)SFRealTimeCommentListQueueCountChangedBlock countChangedBlock;
+@property(nonatomic, assign)NSInteger maxSize;
 
 - (void)addRealTimeCommentsData:(NSArray*)arrayCommentData onTail:(BOOL)onTail;
 - (void)getRealTimeCommentDataWithCallBack:(SFRealTimeCommentListQueueCallBack)callBack;
