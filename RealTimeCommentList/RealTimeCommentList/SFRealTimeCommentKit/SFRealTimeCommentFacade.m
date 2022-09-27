@@ -25,35 +25,48 @@
     if(self = [super init]){
         self.realTimeCommentContentView = containerView;
         [self makeupFacade];
+        [self setupDefaultComponent];
     }
     return self;
 }
 
+- (void)setupDefaultComponent{
+    if(!self.commentListQueue){
+        self.commentListQueue = [[SFRealTimeCommentListQueue alloc] init];
+    }
+    
+    if(!self.commentContentView){
+        self.commentContentView = [[SFRealTimeCommentContentView alloc] initWithFrame:self.realTimeCommentContentView.bounds];
+        self.commentContentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [self.realTimeCommentContentView addSubview:self.commentContentView];
+    }
+    
+    if(!self.commentListDataSource){
+        self.commentListDataSource = [[SFRealTimeCommentDataSource alloc] init];
+    }
+}
+
 - (void)makeupFacade{
-    __weak SFRealTimeCommentFacade* facade = self;
+    __weak SFRealTimeCommentFacade* weakFacade = self;
     
     self.listQueueCountChangedBlock = ^(NSInteger count) {
-        [facade commentListQueueCountChanged:count];
+        [weakFacade commentListQueueCountChanged:count];
     };
-    self.commentListQueue = [[SFRealTimeCommentListQueue alloc] init];
+    self.listQueueDealCommentBlock = ^BOOL(id  _Nonnull commentData) {
+        return [weakFacade preDealCommentData:commentData];
+    };
     
     self.getCustomTrackBlock = ^SFRealTimeCommentListTrack * _Nonnull(NSInteger trackIndex) {
-        return [facade getCustomCommentTrackWithIndex:trackIndex];
+        return [weakFacade getCustomCommentTrackWithIndex:trackIndex];
     };
     
     self.getCustomInstanceBlock = ^SFRealTimeCommentInstance * _Nonnull(id  _Nonnull commentData) {
-        return [facade getCustomCommentInstanceWithData:commentData];
+        return [weakFacade getCustomCommentInstanceWithData:commentData];
     };
     
     self.tapInstanceBlock = ^(SFRealTimeCommentInstance * _Nonnull commentInstance) {
-        [facade tapCommentInstance:commentInstance];
+        [weakFacade tapCommentInstance:commentInstance];
     };
-    
-    self.commentContentView = [[SFRealTimeCommentContentView alloc] initWithFrame:self.realTimeCommentContentView.bounds];
-    self.commentContentView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [self.realTimeCommentContentView addSubview:self.commentContentView];
-    
-    self.commentListDataSource = [[SFRealTimeCommentDataSource alloc] init];
 }
 
 - (void)setCommentListQueue:(SFRealTimeCommentListQueue *)commentListQueue{
@@ -63,6 +76,7 @@
     
     _commentListQueue = commentListQueue;
     _commentListQueue.countChangedBlock = self.listQueueCountChangedBlock;
+    _commentListQueue.dealCommentBlock = self.listQueueDealCommentBlock;
     
     self.commentListDataSource.commentListQueue = commentListQueue;
     self.commentContentView.commentListQueue = commentListQueue;
@@ -72,6 +86,12 @@
     _listQueueCountChangedBlock = listQueueCountChangedBlock;
     
     self.commentListQueue.countChangedBlock = listQueueCountChangedBlock;
+}
+
+- (void)setListQueueDealCommentBlock:(SFRealTimeCommentListQueueDealCommentDataBlock)listQueueDealCommentBlock{
+    _listQueueDealCommentBlock = listQueueDealCommentBlock;
+    
+    self.commentListQueue.dealCommentBlock = listQueueDealCommentBlock;
 }
 
 - (void)setCommentListDataSource:(SFRealTimeCommentDataSource *)commentListDataSource{
@@ -93,6 +113,7 @@
     _commentContentView.getCustomTrackBlock = self.getCustomTrackBlock;
     _commentContentView.getCustomInstanceBlock = self.getCustomInstanceBlock;
     _commentContentView.tapInstanceBlock = self.tapInstanceBlock;
+    _commentContentView.useCoreAnimation = self.useCoreAnimation;
 }
 
 - (void)setGetCustomTrackBlock:(SFRealTimeCommentCustomTrackBlock)getCustomTrackBlock{
@@ -129,6 +150,10 @@
     return nil;
 }
 
+- (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData{
+    return [self.commentContentView reuseCommentInstanceWithIdentifier:identifier commentData:commentData];
+}
+
 - (void)commentListQueueCountChanged:(NSInteger)count{
 //    NSLog(@"current count: %ld", count);
 }
@@ -140,12 +165,26 @@
     
     _status = status;
     
-    self.commentListDataSource.status = status;
+    self.commentListQueue.status = status;
     self.commentContentView.status = status;
-    
-    if(SFRealTimeCommentStatus_Stop == status){
-        [self.commentListQueue clear];
-    }
+    self.commentListDataSource.status = status;
+}
+
+- (BOOL)preDealCommentData:(id)commentData{
+    return [self.commentListQueue dealCommentData:commentData];
+}
+
+- (void)setUseCoreAnimation:(BOOL)useCoreAnimation{
+    _useCoreAnimation = useCoreAnimation;
+    self.commentContentView.useCoreAnimation = useCoreAnimation;
+}
+
+- (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock{
+    return [self.commentContentView searchCommentInstanceWithBlock:searchBlock];
+}
+
+- (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance{
+    [self.commentContentView removeCommentInstance:commentInstance];
 }
 
 @end

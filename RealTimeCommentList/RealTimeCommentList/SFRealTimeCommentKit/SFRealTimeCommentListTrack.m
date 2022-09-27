@@ -31,10 +31,8 @@
 
 - (SFRealTimeCommentInstance*)commentInstanceWithCommentData:(id)commentData{
     SFRealTimeCommentInstance* commentInstance = nil;
-    if(self.getCustomInstanceBlock){
-        commentInstance = self.getCustomInstanceBlock(commentData);
-    }else{
-        commentInstance = [[SFRealTimeCommentInstance alloc] initWithCommentData:commentData];
+    if([self.trackDelegate respondsToSelector:@selector(commentTrack:requestNewCommentInstanceWithData:)]){
+        commentInstance = [self.trackDelegate commentTrack:self requestNewCommentInstanceWithData:commentData];
     }
     return commentInstance;
 }
@@ -45,7 +43,18 @@
     }
     
     SFRealTimeCommentInstance* commentInstance = [self commentInstanceWithCommentData:commentData];
+    if(!commentInstance){
+        __weak SFRealTimeCommentListTrack* weakTrack = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [weakTrack requestCommentData];
+        });
+        return ;
+    }
+    
     [self.arrayCommentInstance addObject:commentInstance];
+    if([self.trackDelegate respondsToSelector:@selector(commentTrack:didAddCommentInstance:)]){
+        [self.trackDelegate commentTrack:self didAddCommentInstance:commentInstance];
+    }
     
     commentInstance.commentContentView = self.commentContentView;
     commentInstance.commentSpeed = self.commentSpeed;
@@ -57,7 +66,13 @@
 
 #pragma mark SFRealTimeCommentInstanceDelegate
 - (void)realTimeCommentInstanceDidEndDisplay:(SFRealTimeCommentInstance *)commentInstance{
-    [self.arrayCommentInstance removeObject:commentInstance];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.arrayCommentInstance removeObject:commentInstance];
+        
+        if([self.trackDelegate respondsToSelector:@selector(commentTrack:didEndDisplayCommentInstance:)]){
+            [self.trackDelegate commentTrack:self didEndDisplayCommentInstance:commentInstance];
+        }
+    });
 }
 
 - (void)realTimeCommentInstanceRequestNextCommentData:(SFRealTimeCommentInstance *)commentInstance{
@@ -147,6 +162,43 @@
     if(self.selectInstanceBlock){
         self.selectInstanceBlock(commentInstance);
     }
+}
+
+- (BOOL)commentInstanceRunning:(CADisplayLink*)displayLink{
+    BOOL bRet = NO;
+    for(SFRealTimeCommentInstance* instance in self.arrayCommentInstance){
+        [instance commentInstanceRunning:displayLink];
+        bRet = YES;
+    }
+    return bRet;
+}
+
+- (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock{
+    for(SFRealTimeCommentInstance* instance in self.arrayCommentInstance){
+        if(searchBlock && searchBlock(instance)){
+            return instance;
+        }
+    }
+    return nil;
+}
+
+- (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance{
+    if((0 == self.arrayCommentInstance.count) || ![self.arrayCommentInstance containsObject:commentInstance]){
+        return ;
+    }
+    
+    BOOL shouldRequestNextComment = (commentInstance == self.arrayCommentInstance.lastObject);
+    
+    [commentInstance clear];
+    [self.arrayCommentInstance removeObject:commentInstance];
+    
+    if(shouldRequestNextComment){
+        [self requestCommentData];
+    }
+}
+
+- (NSInteger)commentInstanceCount{
+    return self.arrayCommentInstance.count;
 }
 
 @end

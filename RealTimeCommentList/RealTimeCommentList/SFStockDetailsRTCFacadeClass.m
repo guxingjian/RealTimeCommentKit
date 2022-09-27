@@ -23,7 +23,7 @@
 - (SFRealTimeCommentListTrack *)getCustomCommentTrackWithIndex:(NSInteger)trackIndex{
     SFRealTimeCommentListTrack* listTrack = [[SFRealTimeCommentListTrack alloc] init];
     
-    listTrack.trackBoundingRect = CGRectMake(0, 10 + 60*trackIndex, self.commentContentView.bounds.size.width, 40);
+    listTrack.trackBoundingRect = CGRectMake(0, 10 + 50*trackIndex, self.commentContentView.bounds.size.width, 40);
     listTrack.commentSpeed = 100;
     listTrack.commentDistance = 60;
 
@@ -31,21 +31,28 @@
 }
 
 - (SFRealTimeCommentInstance *)getCustomCommentInstanceWithData:(id)commentData{
-//    SFStockDetailsRTCInstance* rtcInstance = [[SFStockDetailsRTCInstance alloc] initWithCommentData:commentData];
-    SFStockDetailsRTCViewInstance* rtcInstance = [[SFStockDetailsRTCViewInstance alloc] initWithCommentData:commentData];
-    return rtcInstance;
+    if(!commentData){
+        return nil;
+    }
+    SFRealTimeCommentInstance* commentInstance = [self reuseCommentInstanceWithIdentifier:SFRealTimeCommentInstanceDefaultReuseID commentData:commentData];
+    if(!commentInstance){
+        commentInstance = [[SFStockDetailsRTCInstance alloc] initWithCommentData:commentData];
+    //    commentInstance = [[SFStockDetailsRTCViewInstance alloc] initWithCommentData:commentData];
+    }
+    
+    return commentInstance;
 }
 
 - (void)commentListQueueCountChanged:(NSInteger)count{
     [super commentListQueueCountChanged:count];
     
-    NSInteger trackCount = 6;
-    if(count <= 12){
-        trackCount = 3;
-    }else if(count <= 16){
-        trackCount = 4;
-    }else if(count <= 20){
-        trackCount = 5;
+    NSInteger trackCount = 3;
+    if(count > 12){
+        trackCount = ((count - 12)/4 + 1) + 3;
+    }
+    
+    if(trackCount > 12){
+        trackCount = 12;
     }
     
     self.commentContentView.trackCount = trackCount;

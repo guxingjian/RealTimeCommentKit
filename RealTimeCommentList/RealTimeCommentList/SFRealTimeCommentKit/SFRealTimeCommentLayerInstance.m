@@ -15,11 +15,27 @@
 
 @implementation SFRealTimeCommentLayerInstance
 
+- (void)dealloc{
+    [self clear];
+}
+
+- (CALayer *)commentLayer{
+    if(!_commentLayer){
+        CALayer* layer = [CALayer layer];
+        layer.anchorPoint = CGPointZero;
+        _commentLayer = layer;
+    }
+    return _commentLayer;
+}
+
 - (void)decorateCommentInstance{
     [super decorateCommentInstance];
     
     CGFloat posY = self.trackBoundingRect.origin.y + (self.trackBoundingRect.size.height - self.commentLayer.frame.size.height)/2;
     self.commentLayer.position = CGPointMake(self.commentContentView.bounds.size.width, posY);
+    if(!self.commentLayer.superlayer){
+        [self.commentContentView.layer addSublayer:self.commentLayer];
+    }
 }
 
 - (void)addCommentDisplayAnimation{
@@ -34,7 +50,7 @@
     animation.removedOnCompletion = NO;
     
     CGFloat speed = self.commentSpeed;
-    animation.duration = (self.commentContentView.bounds.size.width + commentLayer.frame.size.width)/speed;
+    animation.duration = (commentLayer.frame.origin.x + commentLayer.frame.size.width)/speed;
     [commentLayer addAnimation:animation forKey:@"position"];
 }
 
@@ -56,50 +72,79 @@
 - (void)pauseDisplay{
     [super pauseDisplay];
     
-    if(0 == self.commentLayer.speed){
-        return ;
-    }
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+  
+    CGRect frame = [self currentBoundingRect];
     
-    CFTimeInterval pausedTime = [self.commentLayer convertTime:CACurrentMediaTime() fromLayer:nil];
-    self.commentLayer.speed = 0;
-    self.commentLayer.timeOffset = pausedTime;
+    [self.commentLayer removeAllAnimations];
+    self.commentLayer.frame = frame;
+    
+//    if(0 == self.commentLayer.speed){
+//        return ;
+//    }
+//
+//    CFTimeInterval pausedTime = [self.commentLayer convertTime:CACurrentMediaTime() fromLayer:nil];
+//    self.commentLayer.speed = 0;
+//    self.commentLayer.timeOffset = pausedTime;
 }
 
 - (void)continueDisplay{
     [super continueDisplay];
     
-    if(1 == self.commentLayer.speed){
-        return ;
-    }
+    [self addCommentDisplayAnimation];
     
-    self.commentLayer.speed = 1;
-    self.commentLayer.beginTime = 0;
-    CFTimeInterval pausedTime = self.commentLayer.timeOffset;
-    self.commentLayer.timeOffset = 0;
-    self.commentLayer.beginTime = [self.commentLayer convertTime:CACurrentMediaTime() fromLayer:nil] - pausedTime;
+//    if(1 == self.commentLayer.speed){
+//        return ;
+//    }
+//
+//    self.commentLayer.speed = 1;
+//    self.commentLayer.beginTime = 0;
+//    CFTimeInterval pausedTime = self.commentLayer.timeOffset;
+//    self.commentLayer.timeOffset = 0;
+//    self.commentLayer.beginTime = [self.commentLayer convertTime:CACurrentMediaTime() fromLayer:nil] - pausedTime;
 }
 
 - (void)clear{
     [super clear];
     
-    [self.commentLayer removeAllAnimations];
-    [self.commentLayer removeFromSuperlayer];
-    self.commentLayer = nil;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    
+    [_commentLayer removeAllAnimations];
+    [_commentLayer removeFromSuperlayer];
 }
 
 - (void)startDisplayComment{
-    CALayer* layer = [CALayer layer];
-    layer.anchorPoint = CGPointZero;
-    self.commentLayer = layer;
-    [self.commentContentView.layer addSublayer:self.commentLayer];
-    
     [super startDisplayComment];
     
     [self addCommentDisplayAnimation];
 }
 
-- (BOOL)canRespondsTouchEvent{
-    return NO;
+- (void)setStatus:(SFRealTimeCommentStatus)status{
+    [super setStatus:status];
+    
+    if(SFRealTimeCommentStatus_Running == status){
+        if(self.requestStatus){
+            [self resetRequestNextCommentDataTimer];
+        }
+    }
+}
+
+
+- (void)resetRequestNextCommentDataTimer{
+    CGRect currentBoundingRect = [self currentBoundingRect];
+    if(CGRectEqualToRect(currentBoundingRect, CGRectZero)){
+        return ;
+    }
+    
+    CGFloat posX = self.commentContentView.bounds.size.width - self.commentDistance - currentBoundingRect.size.width;
+    if(currentBoundingRect.origin.x <= posX){
+        [self triggerRequestNextCommentData];
+        return ;
+    }
+    
+    CGFloat speed = self.commentSpeed;
+    CGFloat requestInterval = ((currentBoundingRect.origin.x + currentBoundingRect.size.width) - posX)/speed;
+    [self performSelector:@selector(triggerRequestNextCommentData) withObject:nil afterDelay:requestInterval inModes:@[NSRunLoopCommonModes]];
 }
 
 @end

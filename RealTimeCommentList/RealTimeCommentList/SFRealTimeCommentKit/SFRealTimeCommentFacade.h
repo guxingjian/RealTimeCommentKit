@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, strong)SFRealTimeCommentListQueue* commentListQueue;
 @property(nonatomic, strong)SFRealTimeCommentListQueueCountChangedBlock listQueueCountChangedBlock;
+@property(nonatomic, strong)SFRealTimeCommentListQueueDealCommentDataBlock listQueueDealCommentBlock;
 
 @property(nonatomic, strong)SFRealTimeCommentDataSource* commentListDataSource;
 
@@ -25,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong)SFRealTimeCommentCustomInstanceBlock getCustomInstanceBlock;
 @property(nonatomic, strong)SFRealTimeCommentTapInstanceBlock tapInstanceBlock;
 
+@property(nonatomic, assign)BOOL useCoreAnimation;
+
 @property(nonatomic, assign)SFRealTimeCommentStatus status;
 
 - (instancetype)initWithCommentContainerView:(UIView*)containerView;
@@ -32,8 +35,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (SFRealTimeCommentListTrack*)getCustomCommentTrackWithIndex:(NSInteger)trackIndex;
 - (SFRealTimeCommentInstance*)getCustomCommentInstanceWithData:(id)commentData;
+- (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData;
+
+- (BOOL)preDealCommentData:(id)commentData;
 - (void)commentListQueueCountChanged:(NSInteger)count;
 - (void)tapCommentInstance:(SFRealTimeCommentInstance *)instance;
+- (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock;
+- (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance;
 
 @end
 

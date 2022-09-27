@@ -70,11 +70,11 @@
         labelTimeInterval.font = [UIFont systemFontOfSize:15];
         labelTimeInterval.textColor = [UIColor blackColor];
         labelTimeInterval.textAlignment = NSTextAlignmentCenter;
-        labelTimeInterval.text = @"5";
+        labelTimeInterval.text = @"1";
         [self.view addSubview:labelTimeInterval];
         self.labelTimeInterval = labelTimeInterval;
         
-        UIView* rtcContentView = [[UIView alloc] initWithFrame:CGRectMake(0, 100, self.view.bounds.size.width, 300)];
+        UIView* rtcContentView = [[UIView alloc] initWithFrame:CGRectMake(0, 100, self.view.bounds.size.width, 350)];
         rtcContentView.backgroundColor = [UIColor blueColor];
         [self.view addSubview:rtcContentView];
         self.rtcContentView = rtcContentView;

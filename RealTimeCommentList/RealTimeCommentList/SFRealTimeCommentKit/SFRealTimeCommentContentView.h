@@ -12,10 +12,11 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef SFRealTimeCommentInstance* _Nonnull (^SFRealTimeCommentCustomInstanceBlock)(id commentData);
 typedef SFRealTimeCommentListTrack* _Nonnull (^SFRealTimeCommentCustomTrackBlock)(NSInteger trackIndex);
 typedef void (^SFRealTimeCommentTapInstanceBlock)(SFRealTimeCommentInstance* commentInstance);
 
-@interface SFRealTimeCommentContentView : UIView
+@interface SFRealTimeCommentContentView : UIView<SFRealTimeCommentListTrackDelegate>
 
 @property(nonatomic, strong)SFRealTimeCommentListQueue* commentListQueue;
 @property(nonatomic, assign)NSInteger trackCount;
@@ -24,9 +25,14 @@ typedef void (^SFRealTimeCommentTapInstanceBlock)(SFRealTimeCommentInstance* com
 @property(nonatomic, strong)SFRealTimeCommentCustomInstanceBlock getCustomInstanceBlock;
 @property(nonatomic, strong)SFRealTimeCommentTapInstanceBlock tapInstanceBlock;
 
+@property(nonatomic, assign)BOOL useCoreAnimation;
+
 @property(nonatomic, assign)SFRealTimeCommentStatus status;
 
 - (SFRealTimeCommentListTrack*)createCommentListTrackWithIndex:(NSInteger)trackIndex;
+- (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData;
+- (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock;
+- (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance;
 
 @end
 

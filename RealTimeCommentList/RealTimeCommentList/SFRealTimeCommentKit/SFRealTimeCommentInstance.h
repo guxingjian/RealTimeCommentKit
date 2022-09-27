@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, weak)id<SFRealTimeCommentInstanceDelegate> commentInstanceDelegate;
 @property(nonatomic, strong)id commentData;
+@property(nonatomic, strong)NSString* reuseIdentifier;
 
 @property(nonatomic, assign)CGRect trackBoundingRect;
 @property(nonatomic, weak)UIView* commentContentView;
@@ -36,9 +37,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, assign)CGRect currentBoundingRect;
 
 - (instancetype)initWithCommentData:(id)commentData;
+- (instancetype)initWithCommentData:(id)commentData reuseIdentifier:(NSString*)reuseIdentifier;
 
 - (void)startDisplayComment;
 - (void)decorateCommentInstance;
+- (void)reDecorateCommentInstance;
 
 - (void)continueDisplay;
 - (void)pauseDisplay;
@@ -49,6 +52,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)canRespondsTouchEvent;
 - (void)sendTouchEvent;
 
+- (void)triggerRequestNextCommentData;
+- (void)commentInstanceRunning:(CADisplayLink*)displayLink;
+
 @end
 
 NS_ASSUME_NONNULL_END
+
+extern NSString* const SFRealTimeCommentInstanceDefaultReuseID;
+

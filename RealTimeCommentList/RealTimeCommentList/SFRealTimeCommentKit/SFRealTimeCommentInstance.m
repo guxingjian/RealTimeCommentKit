@@ -8,9 +8,11 @@
 #import "SFRealTimeCommentInstance.h"
 #import <QuartzCore/QuartzCore.h>
 
+NSString* const SFRealTimeCommentInstanceDefaultReuseID = @"SFRealTimeCommentInstanceDefaultReuseID";
+
 @interface SFRealTimeCommentInstance()
 
-@property(nonatomic, assign)BOOL dispalying;
+@property(nonatomic, assign)BOOL startFlag;
 
 @end
 
@@ -18,12 +20,18 @@
 
 - (void)dealloc{
 //    NSLog(@"SFRealTimeCommentInstance dealloc--");
+    [self clear];
 }
 
 - (instancetype)initWithCommentData:(id)commentData{
+    return [self initWithCommentData:commentData reuseIdentifier:SFRealTimeCommentInstanceDefaultReuseID];
+}
+
+- (instancetype)initWithCommentData:(id)commentData reuseIdentifier:(NSString*)reuseIdentifier{
     if(self = [super init]){
         self.commentData = commentData;
         self.requestStatus = YES;
+        self.reuseIdentifier = reuseIdentifier;
     }
     return self;
 }
@@ -37,31 +45,15 @@
 }
 
 - (void)pauseDisplay{
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
 }
 
 - (void)continueDisplay{
 }
 
 - (void)clear{
-    [NSObject cancelPreviousPerformRequestsWithTarget:self];
-}
-
-- (void)resetRequestNextCommentDataTimer{
-    CGRect currentBoundingRect = [self currentBoundingRect];
-    if(CGRectEqualToRect(currentBoundingRect, CGRectZero)){
-        return ;
-    }
-    
-    CGFloat posX = self.commentContentView.bounds.size.width - self.commentDistance - currentBoundingRect.size.width;
-    if(currentBoundingRect.origin.x <= posX){
-        [self triggerRequestNextCommentData];
-        return ;
-    }
-    
-    CGFloat speed = self.commentSpeed;
-    CGFloat requestInterval = ((currentBoundingRect.origin.x + currentBoundingRect.size.width) - posX)/speed;
-    [self performSelector:@selector(triggerRequestNextCommentData) withObject:nil afterDelay:requestInterval inModes:@[NSRunLoopCommonModes]];
+    self.startFlag = NO;
+    self.requestStatus = YES;
+    _status = SFRealTimeCommentStatus_Stop;
 }
 
 - (void)setStatus:(SFRealTimeCommentStatus)status{
@@ -72,14 +64,11 @@
     _status = status;
     
     if(SFRealTimeCommentStatus_Running == status){
-        if(!self.dispalying){
-            self.dispalying = YES;
+        if(!self.startFlag){
+            self.startFlag = YES;
             [self startDisplayComment];
         }else{
             [self continueDisplay];
-        }
-        if(self.requestStatus){
-            [self resetRequestNextCommentDataTimer];
         }
     }else if(SFRealTimeCommentStatus_Paused == status){
         [self pauseDisplay];
@@ -122,6 +111,13 @@
         return 80;
     }
     return _commentSpeed;
+}
+
+- (void)commentInstanceRunning:(CADisplayLink*)displayLink{
+}
+
+- (void)reDecorateCommentInstance{
+    [self decorateCommentInstance];
 }
 
 @end

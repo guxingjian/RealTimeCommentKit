@@ -15,7 +15,7 @@
 
 - (instancetype)init{
     if(self = [super init]){
-        self.resetTimeInterval = 5;
+        self.resetTimeInterval = 1;
     }
     return self;
 }
@@ -37,7 +37,7 @@
 - (void)fetchRealTimeComment{
     NSArray* arrayComment = @[@"我是弹幕", @"涨停啦", @"快点涨", @"涨起来了涨起来了", @"破股票又跌了", @"没救了没救了", @"啦啦啦", @"快买快买", @"卖了卖了", @"我是弹幕11111", @"给我点赞", @"点赞点赞"];
     
-    NSInteger commentCount = 5;
+    NSInteger commentCount = 10;
     NSMutableArray* arraySubComment = [NSMutableArray array];
     for(NSInteger i = 0; i < commentCount; ++ i){
         NSString* strComment = [arrayComment objectAtIndex:(random()%arrayComment.count)];
@@ -53,6 +53,10 @@
 
 - (void)setResetTimeInterval:(NSInteger)resetTimeInterval{
     _resetTimeInterval = resetTimeInterval;
+    
+    if(SFRealTimeCommentStatus_Stop == self.status){
+        return ;
+    }
     
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [self fetchRealTimeComment];

@@ -12,7 +12,10 @@
 @property(nonatomic, strong)NSMutableArray* arrayCommentTrack;
 @property(nonatomic, assign)BOOL disableSelectCommentInstance;
 
-@property(nonatomic, assign)SFRealTimeCommentStatus cacheStatus;
+//@property(nonatomic, assign)SFRealTimeCommentStatus cacheStatus;
+@property(nonatomic, strong)NSMutableDictionary* dicCommentInstanceReusePool;
+
+@property(nonatomic, strong)CADisplayLink* displayLink;
 
 @end
 
@@ -51,9 +54,7 @@
     track.commentContentView = self;
     track.commentListQueue = self.commentListQueue;
     track.trackIndex = trackIndex;
-    if(self.getCustomInstanceBlock){
-        track.getCustomInstanceBlock = self.getCustomInstanceBlock;
-    }
+    track.trackDelegate = self;
     
     __weak SFRealTimeCommentContentView* contentView = self;
     track.selectInstanceBlock = ^(SFRealTimeCommentInstance * _Nonnull commentInstance) {
@@ -118,8 +119,20 @@
     
     _status = status;
     
+    if(!self.useCoreAnimation){
+        if(SFRealTimeCommentStatus_Running == status){
+            [self startDisplayLink];
+        }else{
+            [self stopDisplayLink];
+        }
+    }
+    
     for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
         track.status = status;
+    }
+    
+    if(SFRealTimeCommentStatus_Stop == status){
+        [self.dicCommentInstanceReusePool removeAllObjects];
     }
 }
 
@@ -180,15 +193,131 @@
     [self selectedCommentInstance:commentInstance];
 }
 
-- (void)willMoveToWindow:(UIWindow *)newWindow{
-    [super willMoveToWindow:newWindow];
+//- (void)willMoveToWindow:(UIWindow *)newWindow{
+//    [super willMoveToWindow:newWindow];
+//
+//    if(newWindow && (SFRealTimeCommentStatus_Running == self.cacheStatus)){
+//        self.cacheStatus = SFRealTimeCommentStatus_Unknown;
+//        self.status = SFRealTimeCommentStatus_Running;
+//    }else if(!newWindow && (SFRealTimeCommentStatus_Running == self.status)){
+//        self.cacheStatus = self.status;
+//        self.status = SFRealTimeCommentStatus_Paused;
+//    }
+//}
+
+- (NSMutableDictionary *)dicCommentInstanceReusePool{
+    if(!_dicCommentInstanceReusePool){
+        _dicCommentInstanceReusePool = [NSMutableDictionary dictionary];
+    }
+    return _dicCommentInstanceReusePool;
+}
+
+- (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData{
+    NSMutableArray* arrayCommentInstance = [self.dicCommentInstanceReusePool objectForKey:identifier];
+    if(!arrayCommentInstance){
+        arrayCommentInstance = [NSMutableArray array];
+        [self.dicCommentInstanceReusePool setObject:arrayCommentInstance forKey:identifier];
+    }
     
-    if(newWindow && (SFRealTimeCommentStatus_Running == self.cacheStatus)){
-        self.cacheStatus = SFRealTimeCommentStatus_Unknown;
-        self.status = SFRealTimeCommentStatus_Running;
-    }else if(!newWindow && (SFRealTimeCommentStatus_Running == self.status)){
-        self.cacheStatus = self.status;
-        self.status = SFRealTimeCommentStatus_Paused;
+    SFRealTimeCommentInstance* commentInstance = nil;
+    if(arrayCommentInstance.count > 0){
+        commentInstance = arrayCommentInstance.lastObject;
+        commentInstance.commentData = commentData;
+        commentInstance.requestStatus = YES;
+        [arrayCommentInstance removeLastObject];
+    }
+    return commentInstance;
+}
+
+- (SFRealTimeCommentInstance *)commentTrack:(SFRealTimeCommentListTrack *)track requestNewCommentInstanceWithData:(id)commentData{
+    SFRealTimeCommentInstance* commentInstance = nil;
+    if(self.getCustomInstanceBlock){
+        commentInstance = self.getCustomInstanceBlock(commentData);
+    }else{
+        commentInstance = [self reuseCommentInstanceWithIdentifier:SFRealTimeCommentInstanceDefaultReuseID commentData:commentData];
+        if(!commentInstance){
+            commentInstance = [[SFRealTimeCommentInstance alloc] initWithCommentData:commentData];
+        }
+    }
+    
+    return commentInstance;
+}
+
+- (void)commentTrack:(SFRealTimeCommentListTrack *)track didEndDisplayCommentInstance:(SFRealTimeCommentInstance *)commentInstance{
+    NSString* identifier = commentInstance.reuseIdentifier;
+    if(0 == identifier.length){
+        return ;
+    }
+    
+    NSMutableArray* arrayCommentInstance = [self.dicCommentInstanceReusePool objectForKey:identifier];
+    if(!arrayCommentInstance){
+        arrayCommentInstance = [NSMutableArray array];
+        [self.dicCommentInstanceReusePool setObject:arrayCommentInstance forKey:identifier];
+    }
+    
+    [arrayCommentInstance addObject:commentInstance];
+}
+
+- (void)commentTrack:(SFRealTimeCommentListTrack *)track didAddCommentInstance:(SFRealTimeCommentInstance *)commentInstance{
+    if(!self.useCoreAnimation && !self.displayLink){
+        [self startDisplayLink];
+    }
+}
+
+- (NSInteger)totalCommentInstanceCount{
+    NSInteger totalCount = 0;
+    for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
+        totalCount = totalCount + [track commentInstanceCount];
+    }
+    return totalCount;
+}
+
+- (void)startDisplayLink{
+    [self stopDisplayLink];
+    
+    NSInteger commentInstanceCount = [self totalCommentInstanceCount];
+    if(0 == commentInstanceCount){
+        return ;
+    }
+    if(self.status != SFRealTimeCommentStatus_Running){
+        return ;
+    }
+    
+    self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(commentInstanceRunning)];
+    [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+}
+
+- (void)stopDisplayLink{
+    if(self.displayLink){
+        [self.displayLink invalidate];
+        self.displayLink = nil;
+    }
+}
+
+- (void)commentInstanceRunning{
+    BOOL bFlag = NO;
+    for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
+        BOOL bRet = [track commentInstanceRunning:self.displayLink];
+        bFlag = bFlag || bRet;
+    }
+    if(!bFlag){
+        [self stopDisplayLink];
+    }
+}
+
+- (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock{
+    for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
+        SFRealTimeCommentInstance* instance = [track searchCommentInstanceWithBlock:searchBlock];
+        if(instance){
+            return instance;
+        }
+    }
+    return nil;
+}
+
+- (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance{
+    for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
+        [track removeCommentInstance:commentInstance];
     }
 }
 

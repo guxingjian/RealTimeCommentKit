@@ -17,6 +17,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 @property(nonatomic, strong)NSCondition* condition;
 @property(nonatomic, strong)dispatch_queue_t addCommentQueue;
 @property(nonatomic, strong)dispatch_queue_t getCommentQueue;
+@property(nonatomic, assign)BOOL clearFlag;
 
 @end
 
@@ -56,7 +57,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 
 - (void)insertCommentData:(id)commentData{
     if(0 == self.arrayData.count){
-        NSMutableArray* arrayCurrentData = [NSMutableArray array];
+        NSMutableArray* arrayCurrentData = [NSMutableArray arrayWithCapacity:SFRealTimeCommentListMaxSize];
         [self.arrayData addObject:arrayCurrentData];
         
         [arrayCurrentData addObject:commentData];
@@ -77,19 +78,36 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 }
 
 - (void)addRealTimeCommentsData:(NSArray*)arrayCommentData onTail:(BOOL)onTail{
+    if(SFRealTimeCommentStatus_Stop == self.status){
+        NSLog(@"can't add comment data, comment list queue current status is: %ld", self.status);
+        return ;
+    }
+    
     NSArray* arrayTempData = [arrayCommentData copy];
     dispatch_async(self.addCommentQueue, ^{
         [self.condition lock];
         
+        NSInteger addCount = 0;
         for(id commentData in arrayTempData){
+            BOOL ret = YES;
+            if(self.dealCommentBlock){
+                ret = self.dealCommentBlock(commentData);
+            }else{
+                ret = [self dealCommentData:commentData];
+            }
+            if(!ret){
+                continue;
+            }
+            
             if(onTail){
                 [self addCommentData:commentData];
             }else{
                 [self insertCommentData:commentData];
             }
+            addCount = addCount + 1;
         }
         
-        self.currentDataCount = self.currentDataCount + arrayCommentData.count;
+        self.currentDataCount = self.currentDataCount + addCount;
         
         if((self.maxSize > 0) && (self.currentDataCount > self.maxSize)){
             [self adjustDataCount];
@@ -134,15 +152,20 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 }
 
 - (void)getRealTimeCommentDataWithCallBack:(SFRealTimeCommentListQueueCallBack)callBack{
+    if(SFRealTimeCommentStatus_Stop == self.status){
+        NSLog(@"can't get comment data, comment list queue current status is: %ld", self.status);
+        return ;
+    }
+    
     dispatch_async(self.getCommentQueue, ^{
         [self.condition lock];
         
-        while (0 == self.currentDataCount) {
+        while (!self.clearFlag && (0 == self.currentDataCount)) {
             [self.condition wait];
         }
         
         id commentData = [self popLastCommentData];
-        
+         
         [self.condition unlock];
         
         if(callBack){
@@ -171,14 +194,51 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
     dispatch_async(self.addCommentQueue, ^{
         [self.condition lock];
         
-        [self.arrayData removeAllObjects];
+        [self commentListQueueClean];
         
-        self.currentDataIndex = 0;
-        self.currentDataCount = 0;
-        
-        [self.condition signal];
+        [self.condition broadcast];
         [self.condition unlock];
     });
+}
+
+- (void)commentListQueueClean{
+    [self.arrayData removeAllObjects];
+    
+    self.currentDataIndex = 0;
+    self.currentDataCount = 0;
+    self.clearFlag = YES;
+}
+
+- (void)recover{
+    dispatch_async(self.addCommentQueue, ^{
+        [self.condition lock];
+        
+        [self commentListQueueRunning];
+        
+        [self.condition unlock];
+    });
+}
+
+- (void)commentListQueueRunning{
+    self.clearFlag = NO;
+}
+
+- (BOOL)dealCommentData:(id)commentData{
+    return YES;
+}
+
+- (void)setStatus:(SFRealTimeCommentStatus)status{
+    if(_status == status){
+        return ;
+    }
+    
+    _status = status;
+    
+    if(SFRealTimeCommentStatus_Running == status){
+        [self recover];
+    }else if(SFRealTimeCommentStatus_Stop == status){
+        [self clear];
+    }
 }
 
 @end
