@@ -256,12 +256,16 @@
     }
     
     [arrayCommentInstance addObject:commentInstance];
+    
+    [self updateCurrentDispalyingRect];
 }
 
 - (void)commentTrack:(SFRealTimeCommentListTrack *)track didAddCommentInstance:(SFRealTimeCommentInstance *)commentInstance{
     if(!self.useCoreAnimation && !self.displayLink){
         [self startDisplayLink];
     }
+    
+    [self updateCurrentDispalyingRect];
 }
 
 - (NSInteger)totalCommentInstanceCount{
@@ -318,6 +322,33 @@
 - (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance{
     for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
         [track removeCommentInstance:commentInstance];
+    }
+}
+
+- (SFRealTimeCommentListTrack*)trackAtIndex:(NSInteger)index{
+    if(index < self.arrayCommentTrack.count){
+        return [self.arrayCommentTrack objectAtIndex:index];
+    }
+    return nil;
+}
+
+- (void)updateCurrentDispalyingRect{
+    CGFloat topPosY = self.bounds.size.height;
+    CGFloat bottomPosY = 0;
+    for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
+        if([track commentInstanceCount] > 0){
+            CGRect trackBoundingRect = track.trackBoundingRect;
+            if(trackBoundingRect.origin.y < topPosY){
+                topPosY = trackBoundingRect.origin.y;
+            }
+            if((trackBoundingRect.origin.y + trackBoundingRect.size.height) > bottomPosY){
+                bottomPosY = (trackBoundingRect.origin.y + trackBoundingRect.size.height);
+            }
+        }
+    }
+    
+    if(bottomPosY > topPosY){
+        self.currentDisplayingRect = CGRectMake(0, topPosY, self.bounds.size.width, bottomPosY - topPosY);
     }
 }
 

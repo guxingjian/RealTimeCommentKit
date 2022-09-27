@@ -67,11 +67,7 @@
 #pragma mark SFRealTimeCommentInstanceDelegate
 - (void)realTimeCommentInstanceDidEndDisplay:(SFRealTimeCommentInstance *)commentInstance{
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self.arrayCommentInstance removeObject:commentInstance];
-        
-        if([self.trackDelegate respondsToSelector:@selector(commentTrack:didEndDisplayCommentInstance:)]){
-            [self.trackDelegate commentTrack:self didEndDisplayCommentInstance:commentInstance];
-        }
+        [self realRemove:commentInstance];
     });
 }
 
@@ -190,10 +186,19 @@
     BOOL shouldRequestNextComment = (commentInstance == self.arrayCommentInstance.lastObject);
     
     [commentInstance clear];
-    [self.arrayCommentInstance removeObject:commentInstance];
+    
+    [self realRemove:commentInstance];
     
     if(shouldRequestNextComment){
         [self requestCommentData];
+    }
+}
+
+- (void)realRemove:(SFRealTimeCommentInstance*)commentInstance{
+    [self.arrayCommentInstance removeObject:commentInstance];
+    
+    if([self.trackDelegate respondsToSelector:@selector(commentTrack:didEndDisplayCommentInstance:)]){
+        [self.trackDelegate commentTrack:self didEndDisplayCommentInstance:commentInstance];
     }
 }
 

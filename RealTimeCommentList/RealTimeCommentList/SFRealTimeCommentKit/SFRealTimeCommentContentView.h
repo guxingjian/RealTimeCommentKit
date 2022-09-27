@@ -26,6 +26,7 @@ typedef void (^SFRealTimeCommentTapInstanceBlock)(SFRealTimeCommentInstance* com
 @property(nonatomic, strong)SFRealTimeCommentTapInstanceBlock tapInstanceBlock;
 
 @property(nonatomic, assign)BOOL useCoreAnimation;
+@property(nonatomic, assign)CGRect currentDisplayingRect;
 
 @property(nonatomic, assign)SFRealTimeCommentStatus status;
 
@@ -33,6 +34,7 @@ typedef void (^SFRealTimeCommentTapInstanceBlock)(SFRealTimeCommentInstance* com
 - (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData;
 - (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock;
 - (void)removeCommentInstance:(SFRealTimeCommentInstance*)commentInstance;
+- (SFRealTimeCommentListTrack*)trackAtIndex:(NSInteger)index;
 
 @end
 
