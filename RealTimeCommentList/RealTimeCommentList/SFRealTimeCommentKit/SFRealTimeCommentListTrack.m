@@ -38,7 +38,7 @@
 }
 
 - (void)showCommentData:(id)commentData{
-    if(SFRealTimeCommentStatus_Stop == self.status){
+    if(SFRealTimeCommentStatus_Clean == self.status){
         return ;
     }
     
@@ -138,7 +138,7 @@
     
     _status = status;
     
-    if(SFRealTimeCommentStatus_Stop == status){
+    if(SFRealTimeCommentStatus_Clean == status){
         [self.arrayCommentInstance removeAllObjects];
     }
 }

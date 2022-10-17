@@ -131,7 +131,7 @@
         track.status = status;
     }
     
-    if(SFRealTimeCommentStatus_Stop == status){
+    if(SFRealTimeCommentStatus_Clean == status){
         [self.dicCommentInstanceReusePool removeAllObjects];
     }
 }

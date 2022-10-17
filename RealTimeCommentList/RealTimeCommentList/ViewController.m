@@ -104,7 +104,7 @@
     });
     
     if(SFRealTimeCommentStatus_Running == self.rtcFacade.status){
-        self.rtcFacade.status = SFRealTimeCommentStatus_Stop;
+        self.rtcFacade.status = SFRealTimeCommentStatus_Clean;
     }else{
         self.rtcFacade.status = SFRealTimeCommentStatus_Running;
     }

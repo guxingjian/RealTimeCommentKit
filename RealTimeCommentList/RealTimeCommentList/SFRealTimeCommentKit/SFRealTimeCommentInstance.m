@@ -53,7 +53,7 @@ NSString* const SFRealTimeCommentInstanceDefaultReuseID = @"SFRealTimeCommentIns
 - (void)clear{
     self.startFlag = NO;
     self.requestStatus = YES;
-    _status = SFRealTimeCommentStatus_Stop;
+    _status = SFRealTimeCommentStatus_Clean;
 }
 
 - (void)setStatus:(SFRealTimeCommentStatus)status{
@@ -72,7 +72,7 @@ NSString* const SFRealTimeCommentInstanceDefaultReuseID = @"SFRealTimeCommentIns
         }
     }else if(SFRealTimeCommentStatus_Paused == status){
         [self pauseDisplay];
-    }else if(SFRealTimeCommentStatus_Stop == status){
+    }else if(SFRealTimeCommentStatus_Clean == status){
         [self clear];
     }
 }

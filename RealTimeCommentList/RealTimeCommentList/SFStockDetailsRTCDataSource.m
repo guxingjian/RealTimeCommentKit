@@ -29,7 +29,7 @@
     
     if(SFRealTimeCommentStatus_Running == status){
         [self fetchRealTimeComment];
-    }else if(SFRealTimeCommentStatus_Stop == status){
+    }else if(SFRealTimeCommentStatus_Clean == status){
         [NSObject cancelPreviousPerformRequestsWithTarget:self];
     }
 }
@@ -54,7 +54,7 @@
 - (void)setResetTimeInterval:(NSInteger)resetTimeInterval{
     _resetTimeInterval = resetTimeInterval;
     
-    if(SFRealTimeCommentStatus_Stop == self.status){
+    if(SFRealTimeCommentStatus_Clean == self.status){
         return ;
     }
     

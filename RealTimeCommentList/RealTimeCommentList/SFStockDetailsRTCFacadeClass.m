@@ -36,8 +36,8 @@
     }
     SFRealTimeCommentInstance* commentInstance = [self reuseCommentInstanceWithIdentifier:SFRealTimeCommentInstanceDefaultReuseID commentData:commentData];
     if(!commentInstance){
-        commentInstance = [[SFStockDetailsRTCInstance alloc] initWithCommentData:commentData];
-    //    commentInstance = [[SFStockDetailsRTCViewInstance alloc] initWithCommentData:commentData];
+//        commentInstance = [[SFStockDetailsRTCInstance alloc] initWithCommentData:commentData];
+        commentInstance = [[SFStockDetailsRTCViewInstance alloc] initWithCommentData:commentData];
     }
     
     return commentInstance;

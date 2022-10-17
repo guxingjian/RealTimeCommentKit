@@ -9,10 +9,10 @@
 #define SFRealtimeCommentHeader_h
 
 typedef NS_ENUM(NSInteger, SFRealTimeCommentStatus){
-    SFRealTimeCommentStatus_Unknown,
-    SFRealTimeCommentStatus_Running,
-    SFRealTimeCommentStatus_Paused,
-    SFRealTimeCommentStatus_Stop
+    SFRealTimeCommentStatus_Unknown, // 默认
+    SFRealTimeCommentStatus_Running, // 运行
+    SFRealTimeCommentStatus_Paused, // 暂停
+    SFRealTimeCommentStatus_Clean // 清空
 };
 
 #endif /* SFRealtimeCommentHeader_h */

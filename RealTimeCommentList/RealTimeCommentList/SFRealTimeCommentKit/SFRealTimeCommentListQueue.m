@@ -78,7 +78,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 }
 
 - (void)addRealTimeCommentsData:(NSArray*)arrayCommentData onTail:(BOOL)onTail{
-    if(SFRealTimeCommentStatus_Stop == self.status){
+    if(SFRealTimeCommentStatus_Clean == self.status){
         NSLog(@"can't add comment data, comment list queue current status is: %ld", self.status);
         return ;
     }
@@ -109,6 +109,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
         
         self.currentDataCount = self.currentDataCount + addCount;
         
+        // 弹幕数量超出maxSize限制后，移除队首多余数据，保留最新数据
         if((self.maxSize > 0) && (self.currentDataCount > self.maxSize)){
             [self adjustDataCount];
         }
@@ -152,7 +153,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
 }
 
 - (void)getRealTimeCommentDataWithCallBack:(SFRealTimeCommentListQueueCallBack)callBack{
-    if(SFRealTimeCommentStatus_Stop == self.status){
+    if(SFRealTimeCommentStatus_Clean == self.status){
         NSLog(@"can't get comment data, comment list queue current status is: %ld", self.status);
         return ;
     }
@@ -160,6 +161,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
     dispatch_async(self.getCommentQueue, ^{
         [self.condition lock];
         
+        // 添加clearFlag条件判断，防止弹幕系统销毁时，condition一直处于wait状态导致SFRealTimeCommentListQueue无法释放
         while (!self.clearFlag && (0 == self.currentDataCount)) {
             [self.condition wait];
         }
@@ -236,7 +238,7 @@ static NSInteger const SFRealTimeCommentListMaxSize = 50;
     
     if(SFRealTimeCommentStatus_Running == status){
         [self recover];
-    }else if(SFRealTimeCommentStatus_Stop == status){
+    }else if(SFRealTimeCommentStatus_Clean == status){
         [self clear];
     }
 }

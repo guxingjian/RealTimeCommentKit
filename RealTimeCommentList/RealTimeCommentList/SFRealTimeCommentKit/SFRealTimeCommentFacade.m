@@ -16,7 +16,7 @@
 @implementation SFRealTimeCommentFacade
 
 - (void)dealloc{
-    self.status = SFRealTimeCommentStatus_Stop;
+    self.status = SFRealTimeCommentStatus_Clean;
     
 //    NSLog(@"SFRealTimeCommentFacade dealloc--");
 }
@@ -70,8 +70,8 @@
 }
 
 - (void)setCommentListQueue:(SFRealTimeCommentListQueue *)commentListQueue{
-    if(commentListQueue){
-        [self checkCurrentStatus];
+    if(![self checkCurrentStatus] || !commentListQueue){
+        return ;
     }
     
     _commentListQueue = commentListQueue;
@@ -95,8 +95,8 @@
 }
 
 - (void)setCommentListDataSource:(SFRealTimeCommentDataSource *)commentListDataSource{
-    if(commentListDataSource){
-        [self checkCurrentStatus];
+    if(![self checkCurrentStatus] || !commentListDataSource){
+        return ;
     }
     
     _commentListDataSource = commentListDataSource;
@@ -104,8 +104,8 @@
 }
 
 - (void)setCommentContentView:(SFRealTimeCommentContentView *)commentContentView{
-    if(commentContentView){
-        [self checkCurrentStatus];
+    if(![self checkCurrentStatus] || !commentContentView){
+        return ;
     }
     
     _commentContentView = commentContentView;
@@ -134,8 +134,12 @@
     self.commentContentView.tapInstanceBlock = tapInstanceBlock;
 }
 
-- (void)checkCurrentStatus{
-    NSAssert((SFRealTimeCommentStatus_Unknown == self.status), @"change sub system in not supported after running");
+- (BOOL)checkCurrentStatus{
+    if(SFRealTimeCommentStatus_Unknown == self.status){
+        return YES;
+    }
+    NSLog(@"change sub system in not supported after running");
+    return NO;
 }
 
 - (void)tapCommentInstance:(SFRealTimeCommentInstance *)instance{
