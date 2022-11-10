@@ -12,7 +12,6 @@
 @property(nonatomic, readwrite)UIView* commentView;
 
 @property(nonatomic, assign)CGFloat requestTargetPosX;
-@property(nonatomic, assign)CGFloat runInterval;
 
 @end
 
@@ -57,12 +56,8 @@
 }
 
 - (void)commentInstanceRunning:(CADisplayLink*)displayLink{
-    if(0 == self.runInterval){
-        self.runInterval = displayLink.duration * self.commentSpeed;
-    }
-    
     CGRect frame = self.commentView.frame;
-    frame.origin.x = frame.origin.x - self.runInterval;
+    frame.origin.x = frame.origin.x - displayLink.duration * self.commentSpeed;
     [self.commentView setFrame:frame];
     
     if((frame.origin.x <= self.requestTargetPosX) && self.requestStatus){
