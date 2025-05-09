@@ -160,10 +160,12 @@
     }
 }
 
-- (BOOL)commentInstanceRunning:(CADisplayLink*)displayLink{
+- (BOOL)commentInstanceRunning:(NSTimeInterval)interval{
     BOOL bRet = NO;
+    SFRealTimeCommentInstance* preInstance = nil;
     for(SFRealTimeCommentInstance* instance in self.arrayCommentInstance){
-        [instance commentInstanceRunning:displayLink];
+        [instance commentInstanceRunning:interval withPreInstance:preInstance];
+        preInstance = instance;
         bRet = YES;
     }
     return bRet;

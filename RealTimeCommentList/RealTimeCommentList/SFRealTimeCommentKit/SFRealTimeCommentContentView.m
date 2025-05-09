@@ -17,6 +17,8 @@
 
 @property(nonatomic, strong)CADisplayLink* displayLink;
 
+@property(nonatomic, assign)CGFloat cacheTime;
+
 @end
 
 @implementation SFRealTimeCommentContentView
@@ -286,7 +288,7 @@
     if(self.status != SFRealTimeCommentStatus_Running){
         return ;
     }
-    
+    self.cacheTime = [NSDate timeIntervalSinceReferenceDate];
     self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(commentInstanceRunning)];
     [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 }
@@ -299,14 +301,19 @@
 }
 
 - (void)commentInstanceRunning{
+    CGFloat nowTime = [NSDate timeIntervalSinceReferenceDate];
+    CGFloat interval = nowTime - self.cacheTime;
+    
     BOOL bFlag = NO;
     for(SFRealTimeCommentListTrack* track in self.arrayCommentTrack){
-        BOOL bRet = [track commentInstanceRunning:self.displayLink];
+        BOOL bRet = [track commentInstanceRunning:interval];
         bFlag = bFlag || bRet;
     }
     if(!bFlag){
         [self stopDisplayLink];
     }
+    
+    self.cacheTime = nowTime;
 }
 
 - (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock{

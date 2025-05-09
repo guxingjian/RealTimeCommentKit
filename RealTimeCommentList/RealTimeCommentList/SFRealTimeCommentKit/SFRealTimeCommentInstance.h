@@ -87,7 +87,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)triggerRequestNextCommentData;
 
 // 基于UIView的弹幕类需要在commentInstanceRunning中更新弹幕对象的位置
-- (void)commentInstanceRunning:(CADisplayLink*)displayLink;
+- (void)commentInstanceRunning:(NSTimeInterval)interval withPreInstance:(SFRealTimeCommentInstance*)preInstance;
 
 @end
 

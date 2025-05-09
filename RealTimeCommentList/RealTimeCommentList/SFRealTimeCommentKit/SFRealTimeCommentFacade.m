@@ -53,7 +53,7 @@
         [weakFacade commentListQueueCountChanged:count];
     };
     self.listQueueDealCommentBlock = ^BOOL(id  _Nonnull commentData) {
-        return [weakFacade preDealCommentData:commentData];
+        return [weakFacade.commentListQueue dealCommentData:commentData];
     };
     
     self.getCustomTrackBlock = ^SFRealTimeCommentListTrack * _Nonnull(NSInteger trackIndex) {
@@ -135,7 +135,7 @@
 }
 
 - (BOOL)checkCurrentStatus{
-    if(SFRealTimeCommentStatus_Unknown == self.status){
+    if(self.status != SFRealTimeCommentStatus_Running){
         return YES;
     }
     NSLog(@"change sub system in not supported after running");
@@ -172,10 +172,6 @@
     self.commentListQueue.status = status;
     self.commentContentView.status = status;
     self.commentListDataSource.status = status;
-}
-
-- (BOOL)preDealCommentData:(id)commentData{
-    return [self.commentListQueue dealCommentData:commentData];
 }
 
 - (void)setUseCoreAnimation:(BOOL)useCoreAnimation{

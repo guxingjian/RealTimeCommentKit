@@ -113,7 +113,7 @@ NSString* const SFRealTimeCommentInstanceDefaultReuseID = @"SFRealTimeCommentIns
     return _commentSpeed;
 }
 
-- (void)commentInstanceRunning:(CADisplayLink*)displayLink{
+- (void)commentInstanceRunning:(CADisplayLink*)displayLink withPreInstance:(SFRealTimeCommentInstance*)preInstance{
 }
 
 - (void)reDecorateCommentInstance{

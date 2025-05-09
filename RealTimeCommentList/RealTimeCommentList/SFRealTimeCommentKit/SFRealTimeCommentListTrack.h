@@ -62,7 +62,7 @@ typedef void (^SFRealTimeCommentSelectInstanceBlock)(SFRealTimeCommentInstance* 
 - (SFRealTimeCommentInstance*)getTapInstanceWithHitPoint:(CGPoint)point;
 
 // 如果轨道对象中包含的弹幕对象为UIView类型的弹幕，则通过commentInstanceRunning方法执行更新弹幕位置等操作
-- (BOOL)commentInstanceRunning:(CADisplayLink*)displayLink;
+- (BOOL)commentInstanceRunning:(NSTimeInterval)interval;
 
 // 搜索指定弹幕对象
 - (SFRealTimeCommentInstance*)searchCommentInstanceWithBlock:(SFRealTimeCommentSearchInstanceBlock)searchBlock;

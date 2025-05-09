@@ -55,9 +55,13 @@
     [_commentView removeFromSuperview];
 }
 
-- (void)commentInstanceRunning:(CADisplayLink*)displayLink{
+- (void)commentInstanceRunning:(NSTimeInterval)interval withPreInstance:(SFRealTimeCommentInstance*)preInstance{
     CGRect frame = self.commentView.frame;
-    frame.origin.x = frame.origin.x - displayLink.duration * self.commentSpeed;
+    if(preInstance){
+        frame.origin.x = preInstance.currentBoundingRect.origin.x + preInstance.currentBoundingRect.size.width + preInstance.commentDistance;
+    }else{
+        frame.origin.x = frame.origin.x - interval * self.commentSpeed;
+    }
     [self.commentView setFrame:frame];
     
     if((frame.origin.x <= self.requestTargetPosX) && self.requestStatus){
@@ -66,6 +70,14 @@
     
     if(frame.origin.x <= -frame.size.width){
         [self comnentInstanceDisplayEnded];
+    }
+}
+
+- (void)setTrackBoundingRect:(CGRect)trackBoundingRect{
+    [super setTrackBoundingRect:trackBoundingRect];
+    
+    if(self.requestStatus){
+        self.requestTargetPosX = self.commentContentView.bounds.size.width - self.commentDistance - self.commentView.bounds.size.width;
     }
 }
 

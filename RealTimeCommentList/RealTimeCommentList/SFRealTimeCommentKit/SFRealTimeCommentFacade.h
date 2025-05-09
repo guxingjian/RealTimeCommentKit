@@ -65,6 +65,7 @@ SFRealTimeCommentFacade 对外门面类
 
 // 初始化时自动调用，子类可以重写此方法自定义facade中commentListQueue，commentListDataSource，commentContentView等子系统的类型
 - (void)makeupFacade;
+- (void)setupDefaultComponent;
 
 // 获取自定义轨道对象类型的回调。getCustomTrackBlock默认实现为调用此方法
 - (SFRealTimeCommentListTrack*)getCustomCommentTrackWithIndex:(NSInteger)trackIndex;
@@ -74,9 +75,6 @@ SFRealTimeCommentFacade 对外门面类
 
 // 通过identifer查找可复用的弹幕对象
 - (SFRealTimeCommentInstance*)reuseCommentInstanceWithIdentifier:(NSString*)identifier commentData:(id)commentData;
-
-// 弹幕数据加入队列之前弹幕数据处理回调，子线程中执行。listQueueDealCommentBlock默认实现为调用此方法
-- (BOOL)preDealCommentData:(id)commentData;
 
 // 弹幕队列中弹幕数量变化回调。listQueueCountChangedBlock默认实现为调用此方法
 - (void)commentListQueueCountChanged:(NSInteger)count;
